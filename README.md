@@ -38,20 +38,22 @@ publisher/publish_events.py   mock clickstream events to Pub/Sub
 
 ## Run it
 
-1. Copy `.env.example` to `.env` and set `PROJECT_ID` and `BUCKET`.
-2. From your laptop or Cloud Shell, run `scripts/01_gcp_setup.sh`.
-3. Open the catalog details page in the Lakehouse console, copy the catalog's service account, and grant it Storage Object User (`roles/storage.objectUser`) on the bucket.
-4. SSH to the VM, clone this repo, copy your `.env`, and run `scripts/02_install_flink.sh`.
-5. In a second SSH session, start the publisher.
+1. Clone the repo and `cd` into it: `git clone <this-repo-url> && cd flink-iceberg-gcp-lakehouse`.
+2. Copy `.env.example` to `.env` and set `PROJECT_ID` and `BUCKET`. Bucket names are globally unique, so something like `my-lakehouse-bucket-<your-project-id>` is a safe choice.
+3. `chmod +x scripts/*.sh` (only needed if you plan to run a script as `./scripts/name.sh` instead of `bash scripts/name.sh`).
+4. From Cloud Shell or your laptop, run `scripts/01_gcp_setup.sh`. It's safe to rerun: every step checks whether its resource already exists and skips it, so a partial failure (an IAM propagation delay, a dropped connection) doesn't require cleaning anything up before trying again.
+5. Open the catalog details page in the Lakehouse console, copy the catalog's service account, and grant it Storage Object User (`roles/storage.objectUser`) on the bucket.
+6. SSH to the VM, clone this repo again, copy your `.env` over, and run `scripts/02_install_flink.sh`.
+7. In a second SSH session, start the publisher.
    ```bash
    python3 -m venv .venv && . .venv/bin/activate
    pip install -r publisher/requirements.txt
    set -a; source .env; set +a
    python3 publisher/publish_events.py
    ```
-6. Run `scripts/03_run_streaming.sh`. Flink's web UI (port 8081, reach it with `gcloud compute ssh ... -- -L 8081:localhost:8081`) shows the running job. A snapshot lands after each checkpoint.
-7. Run the queries in `sql/30_bigquery_verify.sql` in BigQuery. Tables in a Lakehouse runtime catalog use the name `project.catalog.namespace.table`.
-8. Run `scripts/04_run_batch.sh` to build `clickstream_daily`, then query it in BigQuery.
+8. Run `scripts/03_run_streaming.sh`. Flink's web UI (port 8081, reach it with `gcloud compute ssh ... -- -L 8081:localhost:8081`) shows the running job. A snapshot lands after each checkpoint.
+9. Run the queries in `sql/30_bigquery_verify.sql` in BigQuery. Tables in a Lakehouse runtime catalog use the name `project.catalog.namespace.table`.
+10. Run `scripts/04_run_batch.sh` to build `clickstream_daily`, then query it in BigQuery.
 
 ## Notes
 
